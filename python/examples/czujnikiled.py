@@ -18,7 +18,6 @@ LED_BRIGHTNESS = 255  # Set to 0 for darkest and 255 for brightest
 LED_INVERT = False  # True to invert the signal (when using NPN transistor level shift)
 LED_CHANNEL = 0  # set to '1' for GPIOs 13, 19, 41, 45 or 53
 
-
 GPIO.setmode(GPIO.BOARD)  # Set GPIO to pin numbering
 pir = 8  # Assign pin 8 to PIR
 led = 15  # Assign pin 10 to LED
@@ -51,7 +50,8 @@ def colorWipe(strip, color, wait_ms=60):
     for i in range(strip.numPixels()):
         strip.setPixelColor(i, color)
         strip.show()
-        time.sleep(wait_ms/1000.0)
+        time.sleep(wait_ms / 1000.0)
+
 
 # Define functions which animate LEDs in various ways.
 def colorWipe(strip, color, wait_ms=60):
@@ -71,6 +71,19 @@ def colorWipeReverse(strip, color, wait_ms=60):
         time.sleep(wait_ms / 1000.0)
 
 
+def irSensor1(sensorIr1, reportTime):
+    print('jestem w watku sensora')
+    try:
+        while True:
+            if GPIO.input(pir) == True:
+                sensorIr1.set()
+            else:
+                sensorIr1.clear()
+            time.sleep(reportTime / 1000.0)
+    except RuntimeError:
+        print("watek padl zamkniety dostep do GPIO")
+
+
 
 try:
     # Create NeoPixel object with appropriate configuration.
@@ -79,14 +92,20 @@ try:
     strip.begin()
     thread_safe = False
     is_blinding = False
+    sensorIr1 = threading.Event()
+    irSensorThread = threading.Thread(name='irSensor',
+                          target=irSensor1,
+                          args=(sensorIr1,0.001,))
+    irSensorThread.start()
     while True:
-        time.sleep(0.001)
-        if GPIO.input(pir) == True:  # If PIR pin goes high, motion is detected
+        time.sleep(0.01)
+        if sensorIr1.is_set():
             print("Motion Detected!")
-            GPIO.output(led, True)  # Turn on LED
             t = Thread(target=processData, args=(strip, Color(255, 120, 33), 40, False, thread_safe))
             t.start()
             is_blinding = True
+            sensorIr1.clear()
+
             if t.is_alive():
                 print("Wątek żyje")
                 time.sleep(1)
@@ -100,17 +119,15 @@ try:
                 else:
                     t2 = Thread(target=processData, args=(strip, Color(0, 0, 0), 0.01, False, thread_safe))
                     t2.start()
-                    is_blinding =False
+                    is_blinding = False
 
 
 
 except (RuntimeError, KeyboardInterrupt):
-    time.sleep(5000.0 / 1000.0)
-
+    t.join()
     t3 = Thread(target=processData, args=(strip, Color(0, 0, 0), 0.005, True, thread_safe))
     t3.start()
 
 finally:
-    GPIO.output(led, False)  # Turn off LED in case left on
     GPIO.cleanup()  # reset all GPIO
     print("Program ended")

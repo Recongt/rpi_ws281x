@@ -9,7 +9,7 @@ import threading
 import time
 
 # LED strip configuration:
-LED_COUNT = 70  # Number of LED pixels.
+LED_COUNT = 10  # Number of LED pixels.
 LED_PIN = 18  # GPIO pin connected to the pixels (18 uses PWM!).
 # LED_PIN        = 10      # GPIO pin connected to the pixels (10 uses SPI /dev/spidev0.0).
 LED_FREQ_HZ = 800000  # LED signal frequency in hertz (usually 800khz)
@@ -80,7 +80,7 @@ try:
     thread_safe = False
     is_blinding = False
     while True:
-        time.sleep(0.01)
+        time.sleep(0.001)
         if GPIO.input(pir) == True:  # If PIR pin goes high, motion is detected
             print("Motion Detected!")
             GPIO.output(led, True)  # Turn on LED

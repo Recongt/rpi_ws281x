@@ -6,15 +6,14 @@
 # it by taking a long exposure photograph.
 # Based on https://github.com/scottjgibson/PixelPi
 
-import time
-from rpi_ws281x import *
 import argparse
+import time
 
 # Button
 import RPi.GPIO as GPIO
-
 # Lightpainting
 from PIL import Image
+from rpi_ws281x import *
 
 # LED strip configuration:
 LED_COUNT      = 128     # Number of LED pixels.

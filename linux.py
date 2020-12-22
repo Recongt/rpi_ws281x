@@ -28,10 +28,6 @@
 
 
 import SCons
-import string
-import array
-import os
-
 
 tools = ['gcc', 'g++', 'gnulink', 'ar', 'gas']
 

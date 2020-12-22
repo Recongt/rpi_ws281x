@@ -6,9 +6,8 @@
 # green = seconds
 # (To run the program permanently and with autostart use systemd.)
 
-import time
 import datetime
-import math
+import time
 
 from rpi_ws281x import *
 

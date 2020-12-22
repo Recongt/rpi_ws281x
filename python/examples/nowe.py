@@ -10,11 +10,10 @@ from threading import Thread, Lock
 import threading
 import time
 
-
 from rpi_ws281x import *
 
 # LED strip configuration:
-LED_COUNT = 70  # Number of LED pixels.
+LED_COUNT = 200  # Number of LED pixels.
 LED_PIN = 18  # GPIO pin connected to the pixels (18 uses PWM!).
 # LED_PIN        = 10      # GPIO pin connected to the pixels (10 uses SPI /dev/spidev0.0).
 LED_FREQ_HZ = 800000  # LED signal frequency in hertz (usually 800khz)
@@ -23,27 +22,23 @@ LED_BRIGHTNESS = 255  # Set to 0 for darkest and 255 for brightest
 LED_INVERT = False  # True to invert the signal (when using NPN transistor level shift)
 LED_CHANNEL = 0  # set to '1' for GPIOs 13, 19, 41, 45 or 53
 
-#threads
+# threads
 exitFlag = 0
 mutex = Lock()
 
-def processData(strip, thread_safe):
+
+def processData(strip, color, speed, reverse, thread_safe):
     if thread_safe:
         mutex.acquire()
     try:
-        colorWipe(strip, Color(205, 11, 2), 80)  # Red wipe
+        if reverse:
+            colorWipeReverse(strip, color, speed)
+        else:
+            colorWipe(strip, color, speed)
     finally:
         if thread_safe:
             mutex.release()
 
-def processDataReverse(strip, thread_safe):
-    if thread_safe:
-        mutex.acquire()
-    try:
-        colorWipeReverse(strip, Color(255, 80, 30), 80)  # Red wipe
-    finally:
-        if thread_safe:
-            mutex.release()
 
 # Define functions which animate LEDs in various ways.
 def colorWipe(strip, color, wait_ms=60):
@@ -54,13 +49,21 @@ def colorWipe(strip, color, wait_ms=60):
         time.sleep(wait_ms / 1000.0)
 
 
+def colorStrip(strip, color):
+    """Wipe color across display a pixel at a time."""
+    for i in range(strip.numPixels()):
+        strip.setPixelColor(i, color)
+    strip.show()
+
+
 # Define functions which animate LEDs in various ways.
 def colorWipeReverse(strip, color, wait_ms=60):
     """Wipe color across display a pixel at a time."""
     for i in range(strip.numPixels()):
-        strip.setPixelColor(strip.numPixels()-1 - i, color)
+        strip.setPixelColor(strip.numPixels() - 1 - i, color)
         strip.show()
         time.sleep(wait_ms / 1000.0)
+
 
 
 def theaterChase(strip, color, wait_ms=50, iterations=10):
@@ -116,6 +119,7 @@ def theaterChaseRainbow(strip, wait_ms=50):
             for i in range(0, strip.numPixels(), 3):
                 strip.setPixelColor(i + q, 0)
 
+
 class myThread(threading.Thread):
     def __init__(self, threadID, name, counter):
         threading.Thread.__init__(self)
@@ -130,9 +134,10 @@ class myThread(threading.Thread):
         print("Starting " + self.name)
 
         print('Color wipe animations.')
-        colorWipe(strip, Color(85, 11, 2),80)  # Red wipe
+        colorWipe(strip, Color(85, 11, 2), 80)  # Red wipe
         exit()
         print("Exiting " + self.name)
+
 
 class myThreadReverse(threading.Thread):
     def __init__(self, threadID, name, counter):
@@ -147,7 +152,7 @@ class myThreadReverse(threading.Thread):
         strip.begin()
         print("Starting " + self.name)
         print('Color wipe animations.')
-        colorWipeReverse(strip, Color(85, 11, 2),80)  # Red wipe
+        colorWipeReverse(strip, Color(85, 11, 2), 80)  # Red wipe
         print("Exiting " + self.name)
         exit()
 
@@ -159,6 +164,7 @@ def print_time(threadName, counter, delay):
         time.sleep(delay)
         print("%s: %s" % (threadName, time.ctime(time.time())))
         counter -= 1
+
 
 # Main program logic follows:
 if __name__ == '__main__':
@@ -175,30 +181,35 @@ if __name__ == '__main__':
     print('Press Ctrl-C to quit.')
     if not args.clear:
         print('Use "-c" argument to clear LEDs on exit')
-
+    thread_safe = False
     try:
         while True:
             print('Color wipe animations.')
-            #colorWipe(strip, Color(85, 11, 2),0.00001)  # Red wipe
-            #colorWipe(strip, Color(255, 123, 23),10)  # Red wipe
-            #colorWipe(strip, Color(255, 120, 33))  # Red wipe
-            #colorWipeReverse(strip, Color(0, 0, 0),5)  # Red wipe
-            #time.sleep(2000.0 / 1000.0)
+            colorStrip(strip, Color(85, 11, 2))
+            time.sleep(0.5)
+            colorWipe(strip, Color(255, 93, 23),0.01)  # Red wipe
+            time.sleep(0.5)
+
+            colorWipe(strip, Color(0, 0, 0),0.00001)  # Red wipe
+            # colorWipe(strip, Color(255, 123, 23),10)  # Red wipe
+            # colorWipe(strip, Color(255, 120, 33))  # Red wipe
+            # colorWipeReverse(strip, Color(0, 0, 0),5)  # Red wipe
+            time.sleep(1000.0 / 1000.0)
             # Create new threads
-            #thread1 = myThread(1, "Thread-1", 1)
-            #thread2 = myThreadReverse(2, "Thread-2", 2)
+            # thread1 = myThread(1, "Thread-1", 1)
+            # thread2 = myThreadReverse(2, "Thread-2", 2)
 
             # Start new Threads
-            #thread1.start()
-            #thread2.start()
-            thread_safe = False
-            t = Thread(target=processData, args=(strip, thread_safe))
-            t.start()
+            # thread1.start()
+            # thread2.start()
 
-            t2 = Thread(target=processDataReverse, args=(strip, thread_safe))
-            t2.start()
+            #t = Thread(target=processData, args=(strip, Color(255, 120, 33), 40, False, thread_safe))
+            #t.start()
 
-            time.sleep(5000.0 / 1000.0)
+            #t2 = Thread(target=processData, args=(strip, Color(255, 15, 3), 40, True, thread_safe))
+            #t2.start()
+
+           # time.sleep(10000.0 / 1000.0)
             # colorWipe(strip, Color(0,0,0), 10)
             # colorWipe(strip, Color(0, 0, 0))  # Blue wipe
             # colorWipe(strip, Color(0, 0, 255))  # Green wipe
@@ -212,5 +223,7 @@ if __name__ == '__main__':
             # theaterChaseRainbow(strip)
 
     except (RuntimeError, KeyboardInterrupt):
-        time.sleep(2000.0 / 1000.0)
-        colorWipe(strip, Color(0,0,0), 0.001)
+        time.sleep(1000.0 / 1000.0)
+
+        t3 = Thread(target=processData, args=(strip, Color(0, 0, 0), 0.005, True, thread_safe))
+        t3.start()

@@ -7,7 +7,6 @@ import time
 
 from rpi_ws281x import *
 
-
 # LED strip configuration:
 LED_COUNT      = 40      # Number of LED pixels.
 LED_PIN        = 18      # GPIO pin connected to the pixels (must support PWM!).

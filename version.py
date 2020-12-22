@@ -26,7 +26,9 @@
 # OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-import SCons, os
+import SCons
+import os
+
 
 def version_flags(env):
     if not env['V']:

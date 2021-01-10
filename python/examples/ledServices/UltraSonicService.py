@@ -5,11 +5,11 @@ import time
 
 def distance():
     # GPIO Mode (BOARD / BCM)
-    GPIO.setmode(GPIO.BCM)
+    GPIO.setmode(GPIO.BOARD)
 
     # set GPIO Pins
-    GPIO_TRIGGER = 20
-    GPIO_ECHO = 26
+    GPIO_TRIGGER = 38
+    GPIO_ECHO = 37
 
     # set GPIO direction (IN / OUT)
     GPIO.setup(GPIO_TRIGGER, GPIO.OUT)
@@ -19,7 +19,7 @@ def distance():
     GPIO.output(GPIO_TRIGGER, True)
 
     # set Trigger after 0.01ms to LOW
-    time.sleep(0.00001)
+    time.sleep(0.01)
     GPIO.output(GPIO_TRIGGER, False)
 
     StartTime = time.time()
@@ -67,11 +67,17 @@ def sonicSensor(sensorSonicState1, reportTime):
         print("watek padl zamkniety dostep do GPIO")
         GPIO.cleanup()  # reset all GPIO
 
+
+
 def distanceLessThan(dist):
     dista = distance()
+    dista1 = distance()
+    dista2 = distance()
+
+    avg_dista = (dista+dista1+dista2)/3
     print(dist)
-    print(dista)
-    if(dista < dist):
+    print(avg_dista)
+    if(avg_dista < dist):
         return True
     else:
         return False

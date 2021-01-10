@@ -23,14 +23,14 @@ def colorWipe(strip, color, wait_ms=60):
 def colorWipeLumen(strip,wait_ms=60):
     """Wipe color across display a pixel at a time."""
     start = 0
-    for y in range(0, 200, 1):
+    for y in range(0, 100, 1):
         color = Color(int(round(y)), int(round(y)), int(round(y)))
         for i in range(strip.numPixels()):
             if(i == strip.numPixels()):
-                color = Color(int(round(y)), int(round(y*0.664)), int(round(y*0.2396)))
+                color = Color(int(round(y)), int(round(y*0.564)), int(round(y*0.1896)))
                 strip.setPixelColor(i, color)
             else:
-                color = Color(int(round(y + 50)), int(round((y + 50) * 0.664)), int(round((y + 50) * 0.2396)))
+                color = Color(int(round(y + 50)), int(round((y + 50) * 0.564)), int(round((y + 50) * 0.1896)))
                 strip.setPixelColor(i, color)
 
             #strip.show()

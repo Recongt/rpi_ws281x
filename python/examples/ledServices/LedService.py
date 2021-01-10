@@ -8,7 +8,7 @@ from UltraSonicService import *
 from threading import Thread
 
 # LED strip configuration:
-LED_COUNT = 20  # Number of LED pixels.
+LED_COUNT = 40  # Number of LED pixels.
 LED_PIN = 18  # GPIO pin connected to the pixels (18 uses PWM!).
 # LED_PIN        = 10      # GPIO pin connected to the pixels (10 uses SPI /dev/spidev0.0).
 LED_FREQ_HZ = 800000  # LED signal frequency in hertz (usually 800khz)
@@ -22,6 +22,8 @@ exitFlag = 0
 mutex = multiprocessing.Lock()
 
 if __name__ == '__main__':
+
+    TIME_FOR_LIGHT_Sec = 10
     parser = argparse.ArgumentParser()
     parser.add_argument('-c', '--clear', action='store_true', help='clear the display on exit')
     args = parser.parse_args()
@@ -42,62 +44,77 @@ if __name__ == '__main__':
         strip.begin()
         thread_safe = False
         is_blinding = False
-        sensorIr1 = multiprocessing.Event()
-        irSensorDaemon = multiprocessing.Process(name='irSensor',
-                                          target=irSensor1,
-                                          args=(sensorIr1, 0.0003,))
-        irSensorDaemon.start()
-        print("Przed sonicem")
-        sensorSonicState1 = multiprocessing.Event()
-        sonicSensorDemon = multiprocessing.Process(name='sonicSensor',
-                                          target=sonicSensor,
-                                          args=(sensorSonicState1, 0.002,))
-        sonicSensorDemon.start()
+        timeStart = time.time()
 
         while True:
-            time.sleep(0.8)
-            print(sensorIr1.is_set())
-            print(sensorSonicState1.is_set())
+            time.sleep(0.1)
 
-            if sensorSonicState1.is_set():
+            tSonic = Thread(target=processData, args=(strip, Color(255, 120, 33), 40, False, thread_safe, mutex))
+            if distanceLessThan(50) and not is_blinding:
                 print("Motion Sonic Detected!xD")
-                t = Thread(target=processData, args=(strip, Color(255, 120, 33), 40, False, thread_safe, mutex))
-                t.start()
+                colorWipeLumen(strip, 10)
+                tSonic.start()
                 is_blinding = True
-                sensorSonicState1.clear()
+                timeStart = time.time()
 
-                if t.is_alive():
+                if tSonic.is_alive():
                     print("Wątek sonic żyje")
                     #time.sleep(1)
                 else:
                     print("Wątek sonic leży")
+            elif distanceLessThan(50) and is_blinding:
+                print('Sonic aktywny ale nadal świeci')
+                timeStart = time.time()
+                tSonic.start()
 
-            elif(sensorIr1.is_set()):
+            #IR
+            tIr = Thread(target=processData, args=(strip, Color(255, 120, 133), 40, True, thread_safe, mutex))
+            if(getIrState()) and not is_blinding:
                 print("Motion Ir Detected!xD")
-                t = Thread(target=processData, args=(strip, Color(255, 120, 133), 40, True, thread_safe, mutex))
-                t.start()
+               # tIr = Thread(target=processData, args=(strip, Color(255, 120, 133), 40, True, thread_safe, mutex))
+                colorWipeLumen(strip, 10)
+                tIr.start()
                 is_blinding = True
-                sensorSonicState1.clear()
+                timeStart = time.time()
 
-                if t.is_alive():
+                if tIr.is_alive():
                     print("Wątek ir żyje")
                     #time.sleep(1)
                 else:
                     print("Wątek ir leży")
-            else:
-                print("No motion Detected!xD")
-                if is_blinding:
-                    if t.is_alive():
-                        time.sleep(0.5)
-                    else:
-                        t2 = Thread(target=processData, args=(strip, Color(0, 0, 0), 0.01, False, thread_safe, mutex))
-                        t2.start()
-                        is_blinding = False
+
+
+            elif(getIrState()) and is_blinding:
+                print("Ir Motion Detected! But is blindig")
+                timeStart = time.time()
+                print("odpalam nową wiazakę")
+                if tIr.is_alive():
+                    print("ir zywy")
+                else:
+                    tIr = Thread(target=processData, args=(strip, Color(255, 120, 133), 40, True, thread_safe, mutex))
+                    tIr.start()
+                    is_blinding=True
+
+            print("przed wylączaniem")
+            if is_blinding & ((time.time() - timeStart) > TIME_FOR_LIGHT_Sec):
+                if tIr.is_alive() or tSonic.is_alive():
+                    print("zaczekam az czas sie skonczy")
+                    time.sleep(0.1)
+                elif (time.time() - timeStart) >TIME_FOR_LIGHT_Sec & is_blinding:
+                    print("Czas sie skonczył wyłączam")
+                    print((time.time() - timeStart) >TIME_FOR_LIGHT_Sec & is_blinding)
+                    print((time.time() - timeStart))
+                    t2 = Thread(target=processData, args=(strip, Color(0, 0, 0), 0.01, False, thread_safe, mutex))
+                    t2.start()
+                    is_blinding = False
 
 
 
     except (RuntimeError, KeyboardInterrupt):
-        t.join()
+        if tIr.is_alive():
+            tIr.join()
+        if tSonic.is_alive():
+            tSonic.join()
         t3 = Thread(target=processData, args=(strip, Color(0, 0, 0), 0.005, True, thread_safe, mutex))
         t3.start()
 

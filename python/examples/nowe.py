@@ -9,11 +9,12 @@ import argparse
 from threading import Thread, Lock
 import threading
 import time
-
 from rpi_ws281x import *
+from ledServices.LEDMEthods import *
+
 
 # LED strip configuration:
-LED_COUNT = 200  # Number of LED pixels.
+LED_COUNT = 20  # Number of LED pixels.
 LED_PIN = 18  # GPIO pin connected to the pixels (18 uses PWM!).
 # LED_PIN        = 10      # GPIO pin connected to the pixels (10 uses SPI /dev/spidev0.0).
 LED_FREQ_HZ = 800000  # LED signal frequency in hertz (usually 800khz)
@@ -39,30 +40,6 @@ def processData(strip, color, speed, reverse, thread_safe):
         if thread_safe:
             mutex.release()
 
-
-# Define functions which animate LEDs in various ways.
-def colorWipe(strip, color, wait_ms=60):
-    """Wipe color across display a pixel at a time."""
-    for i in range(strip.numPixels()):
-        strip.setPixelColor(i, color)
-        strip.show()
-        time.sleep(wait_ms / 1000.0)
-
-
-def colorStrip(strip, color):
-    """Wipe color across display a pixel at a time."""
-    for i in range(strip.numPixels()):
-        strip.setPixelColor(i, color)
-    strip.show()
-
-
-# Define functions which animate LEDs in various ways.
-def colorWipeReverse(strip, color, wait_ms=60):
-    """Wipe color across display a pixel at a time."""
-    for i in range(strip.numPixels()):
-        strip.setPixelColor(strip.numPixels() - 1 - i, color)
-        strip.show()
-        time.sleep(wait_ms / 1000.0)
 
 
 
@@ -185,9 +162,10 @@ if __name__ == '__main__':
     try:
         while True:
             print('Color wipe animations.')
-            colorStrip(strip, Color(85, 11, 2))
+            colorWipeLumen(strip,30)
+            #colorStrip(strip, Color(85, 11, 2))
             time.sleep(0.5)
-            colorWipe(strip, Color(255, 93, 23),0.01)  # Red wipe
+            #colorWipe(strip, Color(255, 93, 23),0.01)  # Red wipe
             time.sleep(0.5)
 
             colorWipe(strip, Color(0, 0, 0),0.00001)  # Red wipe

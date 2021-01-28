@@ -8,7 +8,7 @@ from UltraSonicService import *
 from threading import Thread
 
 # LED strip configuration:
-LED_COUNT = 40  # Number of LED pixels.
+LED_COUNT = 120  # Number of LED pixels.
 LED_PIN = 18  # GPIO pin connected to the pixels (18 uses PWM!).
 # LED_PIN        = 10      # GPIO pin connected to the pixels (10 uses SPI /dev/spidev0.0).
 LED_FREQ_HZ = 800000  # LED signal frequency in hertz (usually 800khz)
@@ -24,6 +24,7 @@ mutex = multiprocessing.Lock()
 if __name__ == '__main__':
 
     TIME_FOR_LIGHT_Sec = 10
+    TIME_FOR_SILENCE_Sec = 5
     parser = argparse.ArgumentParser()
     parser.add_argument('-c', '--clear', action='store_true', help='clear the display on exit')
     args = parser.parse_args()
@@ -47,10 +48,13 @@ if __name__ == '__main__':
         timeStart = time.time()
 
         while True:
-            time.sleep(0.1)
-
+            time.sleep(0.2)
+            sonicState = distanceLessThan(90, 38, 37)
+            time.sleep(0.003)
+           # irState = getIrState()
+            irState =distanceLessThan(90, 16, 15)
             tSonic = Thread(target=processData, args=(strip, Color(255, 120, 33), 40, False, thread_safe, mutex))
-            if distanceLessThan(50) and not is_blinding:
+            if sonicState and not is_blinding:
                 print("Motion Sonic Detected!xD")
                 colorWipeLumen(strip, 10)
                 tSonic.start()
@@ -62,14 +66,14 @@ if __name__ == '__main__':
                     #time.sleep(1)
                 else:
                     print("Wątek sonic leży")
-            elif distanceLessThan(50) and is_blinding:
+            elif sonicState and is_blinding and (time.time() - timeStart > TIME_FOR_SILENCE_Sec):
                 print('Sonic aktywny ale nadal świeci')
                 timeStart = time.time()
                 tSonic.start()
 
             #IR
             tIr = Thread(target=processData, args=(strip, Color(255, 120, 133), 40, True, thread_safe, mutex))
-            if(getIrState()) and not is_blinding:
+            if(irState) and not is_blinding:
                 print("Motion Ir Detected!xD")
                # tIr = Thread(target=processData, args=(strip, Color(255, 120, 133), 40, True, thread_safe, mutex))
                 colorWipeLumen(strip, 10)
@@ -84,7 +88,7 @@ if __name__ == '__main__':
                     print("Wątek ir leży")
 
 
-            elif(getIrState()) and is_blinding:
+            elif(irState) and is_blinding and (time.time() - timeStart > TIME_FOR_SILENCE_Sec):
                 print("Ir Motion Detected! But is blindig")
                 timeStart = time.time()
                 print("odpalam nową wiazakę")
@@ -104,8 +108,7 @@ if __name__ == '__main__':
                     print("Czas sie skonczył wyłączam")
                     print((time.time() - timeStart) >TIME_FOR_LIGHT_Sec & is_blinding)
                     print((time.time() - timeStart))
-                    t2 = Thread(target=processData, args=(strip, Color(0, 0, 0), 0.01, False, thread_safe, mutex))
-                    t2.start()
+                    colorWipeDimming(strip, 15)
                     is_blinding = False
 
 

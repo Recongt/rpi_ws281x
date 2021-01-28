@@ -1,15 +1,20 @@
 import RPi.GPIO as GPIO
 import time
 
-
-
-def distance():
+def distance(GPIO_Trigger, GPIO_Echo):
     # GPIO Mode (BOARD / BCM)
     GPIO.setmode(GPIO.BOARD)
 
     # set GPIO Pins
+
     GPIO_TRIGGER = 38
     GPIO_ECHO = 37
+
+    if (GPIO_Trigger != None):
+        GPIO_TRIGGER = GPIO_Trigger
+
+    if (GPIO_Echo != None):
+        GPIO_ECHO = GPIO_Echo
 
     # set GPIO direction (IN / OUT)
     GPIO.setup(GPIO_TRIGGER, GPIO.OUT)
@@ -43,7 +48,9 @@ def distance():
 
 
 
-def sonicSensor(sensorSonicState1, reportTime):
+
+
+def sonicSensor(sensorSonicState1, reportTime, trigger_pin, echo_pin):
 
     print('jestem w watku sensora ultrasonicznego')
     try:
@@ -51,7 +58,7 @@ def sonicSensor(sensorSonicState1, reportTime):
         lastValue2 = 0
         while True:
             time.sleep(0.01)
-            dist = distance()
+            dist = distance(trigger_pin, echo_pin)
             roundDistance = (dist + lastValue + lastValue2) / 3
             print("Measured Distance = %.1f cm" % roundDistance)
             time.sleep(0.3)
@@ -69,12 +76,13 @@ def sonicSensor(sensorSonicState1, reportTime):
 
 
 
-def distanceLessThan(dist):
-    dista = distance()
-    dista1 = distance()
-    dista2 = distance()
+def distanceLessThan(dist, trig_pin, echo_pin):
+    dista = distance(trig_pin, echo_pin)
+    dista1 = distance(trig_pin, echo_pin)
+    dista2 = distance(trig_pin, echo_pin)
 
     avg_dista = (dista+dista1+dista2)/3
+    print("Pin numer:", echo_pin, "Odleglosc: ", avg_dista)
     print(dist)
     print(avg_dista)
     if(avg_dista < dist):
